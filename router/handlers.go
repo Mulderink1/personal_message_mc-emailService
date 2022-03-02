@@ -1,7 +1,10 @@
 package router
 
 import (
+	"encoding/json"
+	"fmt"
 	domain "github.com/Mulderink1/personal_message_mc-services-domain"
+
 	"github.com/personal_message_mc-emailService/email"
 	"net/http"
 )
@@ -17,8 +20,29 @@ func NewHandlers(log *domain.Logger) *Handlers {
 }
 
 func (h *Handlers) MessageHandler(w http.ResponseWriter, r *http.Request) {
-	em := r.URL.Query().Get("email")
+	if r.Method == http.MethodPost {
+		m := domain.Message{}
+		err := json.NewDecoder(r.Body).Decode(&m)
+		if err != nil {
+			h.Log.Logger.Error(fmt.Sprintf("error: %s: %v", err.Error(), http.StatusBadRequest))
+			return
+		}
 
-	h.Log.Logger.Info("MessageHandler received Get")
-	email.SmsSender(h.Log, em)
+		h.Log.Logger.Info("MessageHandler received Get")
+		err = email.SmsSender(h.Log, m)
+		if err != nil {
+			h.Log.Logger.Error(fmt.Sprintf("error: %s: %v", err.Error(), http.StatusBadRequest))
+			writeResponse(w, 500, err.Error())
+		} else {
+			writeResponse(w, 200, "Success")
+		}
+	}
+}
+
+func writeResponse(w http.ResponseWriter, code int, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(code)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		panic(err)
+	}
 }

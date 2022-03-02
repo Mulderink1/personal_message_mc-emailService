@@ -7,15 +7,15 @@ import (
 	"os"
 )
 
-func SmsSender(log *domain.Logger, email string) {
+func SmsSender(log *domain.Logger, message domain.Message) error {
 	from := os.Getenv("EMAIL")
 	pass := os.Getenv("PASSWORD")
 
 	to := []string{
-		email,
+		message.Email,
 	}
 
-	msg := []byte("This is a test email message from GoLang.")
+	msg := []byte(fmt.Sprintf("%v: from GoLang.", message.Action))
 
 	smtpHost := "smtp.gmail.com"
 	smtpPort := "587"
@@ -26,7 +26,9 @@ func SmsSender(log *domain.Logger, email string) {
 	err := smtp.SendMail(smtpConn, auth, from, to, msg)
 	if err != nil {
 		log.Logger.Error(err.Error())
-		return
+		return err
 	}
-	log.Logger.Info(fmt.Sprintf("Email Sent to: %v", email))
+	log.Logger.Info(fmt.Sprintf("Email Sent to: %v", message.Email))
+
+	return nil
 }
