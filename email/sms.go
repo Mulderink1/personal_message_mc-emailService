@@ -15,7 +15,7 @@ func SmsSender(log *domain.Logger, message domain.Message) error {
 		message.Email,
 	}
 
-	msg := []byte(fmt.Sprintf("%v: from GoLang.", message.Action))
+	msg := []byte(fmt.Sprintf("%s from GoLang.", message.Action))
 
 	smtpHost := "smtp.gmail.com"
 	smtpPort := "587"

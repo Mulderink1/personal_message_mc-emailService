@@ -21,14 +21,10 @@ func NewHandlers(log *domain.Logger) *Handlers {
 
 func (h *Handlers) MessageHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method == http.MethodPost {
-		m := domain.Message{}
-		err := json.NewDecoder(r.Body).Decode(&m)
+		m, err := decodeMessage(r, h)
 		if err != nil {
-			h.Log.Logger.Error(fmt.Sprintf("error: %s: %v", err.Error(), http.StatusBadRequest))
 			return
 		}
-
-		h.Log.Logger.Info("MessageHandler received Get")
 		err = email.SmsSender(h.Log, m)
 		if err != nil {
 			h.Log.Logger.Error(fmt.Sprintf("error: %s: %v", err.Error(), http.StatusBadRequest))
@@ -37,6 +33,19 @@ func (h *Handlers) MessageHandler(w http.ResponseWriter, r *http.Request) {
 			writeResponse(w, 200, "Success")
 		}
 	}
+}
+
+func decodeMessage(r *http.Request, h *Handlers) (domain.Message, error) {
+	h.Log.Logger.Info("MessageHandler received Get")
+
+	m := domain.Message{}
+	err := json.NewDecoder(r.Body).Decode(&m)
+	if err != nil {
+		h.Log.Logger.Error(fmt.Sprintf("error: %s: %v", err.Error(), http.StatusBadRequest))
+		return domain.Message{}, err
+	}
+
+	return m, nil
 }
 
 func writeResponse(w http.ResponseWriter, code int, data interface{}) {
